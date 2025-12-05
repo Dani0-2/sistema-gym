@@ -2,6 +2,7 @@ import { IReservasRepository } from "../repositories/IReservasRepository";
 import { Reserva } from "../domain/Reserva";
 import { randomUUID } from "crypto";
 import { IPaymentGateway } from "../infrastructure/payments/IPaymentGateway";
+import { ICanchasRepository } from "../repositories/ICanchasRepository";
 
 function horaToMinutos(hora: string): number {
   const [h = 0, m = 0] = hora.split(":").map(Number);
@@ -9,7 +10,11 @@ function horaToMinutos(hora: string): number {
 }
 
 export class ReservasService {
-  constructor(private reservasRepo: IReservasRepository, private paymentGateway: IPaymentGateway) {}
+  constructor(
+    private reservasRepo: IReservasRepository,
+    private canchasRepo: ICanchasRepository,
+    private paymentGateway: IPaymentGateway
+  ) {}
 
   async verificarDisponibilidad(data: {
     canchaId: string;
@@ -42,13 +47,18 @@ export class ReservasService {
     horaInicio: string;
     horaFin: string;
   }) {
+    
+    const cancha = await this.canchasRepo.findById(data.canchaId);
+  if (!cancha) {
+    throw new Error("La cancha no existe");
+  }
+
     const reserva = new Reserva({
       id: randomUUID(),
       estado: "pendiente",
       creadoEn: new Date(),
       ...data,
     });
-
     await this.reservasRepo.create(reserva);
     return reserva;
   }

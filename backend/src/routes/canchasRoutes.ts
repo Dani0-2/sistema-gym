@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { CanchasInMemoryRepository } from "../repositories/CanchasInMemoryRepository";
+import { canchasRepo } from "../repositories/InMemoryRepos";
 import { CanchasService } from "../services/CanchasService";
 import { CanchasController } from "../controllers/CanchasController";
 
+
 const router = Router();
 
-const canchasRepo = new CanchasInMemoryRepository();
 const canchasService = new CanchasService(canchasRepo);
 const canchasController = new CanchasController(canchasService);
 

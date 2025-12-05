@@ -77,6 +77,7 @@ export class ReservasController {
       res.status(400).json({ error: error.message });
     }
   };
+  
     pagarReserva = async (req: Request, res: Response) => {
     try {
       const { id } = req.params as { id: string };
