@@ -1,3 +1,4 @@
+\```mermaid
 C4Context
     title Sistema de Reservas de Canchas - C4 Nivel 1 (Contexto)
 
@@ -9,7 +10,9 @@ C4Context
 
     Rel(usuario, sistema, "Realiza reservas, consulta disponibilidad, paga y cancela")
     Rel(sistema, proveedorPagos, "Envía solicitudes de cobro por reserva")
+\```
 
+\```mermaid
 C4Container
     title Sistema de Reservas de Canchas - C4 Nivel 2 (Contenedores)
 
@@ -24,8 +27,10 @@ C4Container
     Rel(usuario, api, "Consume API via HTTP/JSON")
     Rel(api, repos, "Lee/escribe canchas y reservas")
     Rel(api, pagos, "Solicita cobros")
+\```
 
-    C4Component
+\```mermaid
+C4Component
     title Sistema de Reservas de Canchas - C4 Nivel 3 (Componentes Backend)
 
     Container(api, "API REST", "Express.js")
@@ -39,10 +44,10 @@ C4Container
     Component(repoCanchas, "CanchasInMemoryRepository", "Repositorio", "Almacena canchas en memoria")
     Component(repoReservas, "ReservasInMemoryRepository", "Repositorio", "Almacena reservas en memoria")
 
-    Component(entityReserva, "Reserva", "Entidad", "Propiedades + reglas de negocio (cancelar, pagar)")
-    Component(entityCancha, "Cancha", "Entidad", "Propiedades + reglas de negocio (activar, desactivar, actualizar)")
+    Component(entityReserva, "Reserva", "Entidad", "Propiedades y reglas de negocio (cancelar, pagar)")
+    Component(entityCancha, "Cancha", "Entidad", "Propiedades y reglas de negocio (activar, desactivar, actualizar)")
 
-    Component(adapterPago, "FakePaymentGateway", "Adapter", "Simula proveedor externo de pagos")
+    Component(adapterPago, "FakePaymentGateway", "Adapter", "Simula un proveedor externo de pagos")
 
     Rel(api, controllerCanchas, "Llama")
     Rel(api, controllerReservas, "Llama")
@@ -57,3 +62,4 @@ C4Container
 
     Rel(repoCanchas, entityCancha, "Almacena instancias de")
     Rel(repoReservas, entityReserva, "Almacena instancias de")
+\```
