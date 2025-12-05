@@ -4,34 +4,29 @@ import { ReservasService } from "../services/ReservasService";
 export class ReservasController {
   constructor(private reservasService: ReservasService) {}
   
-  consultarDisponibilidad = async (req: Request, res: Response) => {
-    try {
-      const { canchaId, fecha, horaInicio, horaFin } = req.query as {
-        canchaId?: string;
-        fecha?: string;
-        horaInicio?: string;
-        horaFin?: string;
-      };
+consultarDisponibilidad = async (req: Request, res: Response) => {
+  try {
+    const canchaId = req.query.canchaId as string;
+    const fecha = req.query.fecha as string;
+    const horaInicio = req.query.horaInicio as string;
+    const horaFin = req.query.horaFin as string;
 
-      if (!canchaId || !fecha || !horaInicio || !horaFin) {
-        return res.status(400).json({
-          error:
-            "canchaId, fecha, horaInicio y horaFin son parámetros requeridos",
-        });
-      }
-
-      const resultado = await this.reservasService.verificarDisponibilidad({
-        canchaId,
-        fecha,
-        horaInicio,
-        horaFin,
-      });
-
-      res.json(resultado);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    if (!canchaId || !fecha || !horaInicio || !horaFin) {
+      return res.status(400).json({ error: "Parámetros incompletos" });
     }
-  };
+
+    const resultado = await this.reservasService.verificarDisponibilidad({
+      canchaId,
+      fecha,
+      horaInicio,
+      horaFin,
+    });
+
+    res.json(resultado);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
   crearReserva = async (req: Request, res: Response) => {
     try {

@@ -40,29 +40,48 @@ export class ReservasService {
     return { disponible: !hayTraslape };
   }
 
+  
   async crearReserva(data: {
-    canchaId: string;
-    usuarioId: string;
-    fecha: string;
-    horaInicio: string;
-    horaFin: string;
-  }) {
-    
-    const cancha = await this.canchasRepo.findById(data.canchaId);
+  canchaId: string;
+  usuarioId: string;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+}) {
+  const cancha = await this.canchasRepo.findById(data.canchaId);
   if (!cancha) {
     throw new Error("La cancha no existe");
   }
 
-    const reserva = new Reserva({
-      id: randomUUID(),
-      estado: "pendiente",
-      creadoEn: new Date(),
-      ...data,
-    });
-    await this.reservasRepo.create(reserva);
-    return reserva;
+  if (cancha.props.activa === false) {
+    throw new Error("La cancha está inactiva");
   }
-  
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const fechaReserva = new Date(data.fecha);
+  if (fechaReserva < hoy) {
+    throw new Error("La fecha de la reserva debe ser futura");
+  }
+
+  const inicioMin = horaToMinutos(data.horaInicio);
+  const finMin = horaToMinutos(data.horaFin);
+
+  if (inicioMin >= finMin) {
+    throw new Error("La hora de inicio debe ser menor que la hora de fin");
+  }
+
+  const reserva = new Reserva({
+    id: randomUUID(),
+    estado: "pendiente",
+    creadoEn: new Date(),
+    ...data,
+  });
+
+  await this.reservasRepo.create(reserva);
+  return reserva;
+}
     async obtenerReservaPorId(id: string): Promise<Reserva | null> {
     const reserva = await this.reservasRepo.findById(id);
     return reserva ?? null;
@@ -85,13 +104,10 @@ export class ReservasService {
       throw new Error("Reserva no encontrada");
     }
 
-    // 1. Cobrar usando el gateway (Adapter)
     await this.paymentGateway.cobrarReserva(reserva);
 
-    // 2. Cambiar estado en el dominio
     reserva.marcarComoPagada();
 
-    // 3. Persistir cambio
     await this.reservasRepo.update(reserva);
 
     return reserva;
