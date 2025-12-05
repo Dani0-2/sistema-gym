@@ -1,12 +1,14 @@
 import express from "express";
 import cors from "cors";
 import reservasRoutes from "./routes/reservasRoutes";
+import canchasRoutes from "./routes/canchasRoutes";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use("/reservas", reservasRoutes);
+app.use("/canchas", canchasRoutes);
 
 
 app.get("/health", (req, res) => {

@@ -1,6 +1,7 @@
 import { IReservasRepository } from "../repositories/IReservasRepository";
 import { Reserva } from "../domain/Reserva";
 import { randomUUID } from "crypto";
+import { IPaymentGateway } from "../infrastructure/payments/IPaymentGateway";
 
 function horaToMinutos(hora: string): number {
   const [h = 0, m = 0] = hora.split(":").map(Number);
@@ -8,7 +9,7 @@ function horaToMinutos(hora: string): number {
 }
 
 export class ReservasService {
-  constructor(private reservasRepo: IReservasRepository) {}
+  constructor(private reservasRepo: IReservasRepository, private paymentGateway: IPaymentGateway) {}
 
   async verificarDisponibilidad(data: {
     canchaId: string;
@@ -51,6 +52,7 @@ export class ReservasService {
     await this.reservasRepo.create(reserva);
     return reserva;
   }
+  
     async obtenerReservaPorId(id: string): Promise<Reserva | null> {
     const reserva = await this.reservasRepo.findById(id);
     return reserva ?? null;
@@ -63,6 +65,25 @@ export class ReservasService {
     }
     reserva.cancelar();
     await this.reservasRepo.update(reserva);
+    return reserva;
+  }
+
+    async pagarReserva(id: string): Promise<Reserva> {
+    const reserva = await this.reservasRepo.findById(id);
+
+    if (!reserva) {
+      throw new Error("Reserva no encontrada");
+    }
+
+    // 1. Cobrar usando el gateway (Adapter)
+    await this.paymentGateway.cobrarReserva(reserva);
+
+    // 2. Cambiar estado en el dominio
+    reserva.marcarComoPagada();
+
+    // 3. Persistir cambio
+    await this.reservasRepo.update(reserva);
+
     return reserva;
   }
 }
