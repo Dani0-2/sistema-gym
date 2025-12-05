@@ -63,6 +63,18 @@ La documentación detallada se encuentra en:
 
 ⸻
 
+Patrones de Diseño y Principios SOLID
+
+Este proyecto aplica múltiples patrones de diseño y principios de arquitectura limpia.  
+Los detalles completos se encuentran en:
+
+- [`SOLID.md`](./SOLID.md): Evidencia de la aplicación de SRP, DIP, ISP y casos OCP/LSP.
+- [`PATTERNS.md`](./PATTERNS.md): Patrones aplicados en backend (Repository, Adapter, Domain Model, DI) y patrones planificados para frontend.
+
+Estos archivos contienen rutas a las clases, explicaciones técnicas y justificación de diseño.
+
+⸻
+
 Patrones de diseño aplicados
 	•	Repository Pattern
 	•	Adapter Pattern (para el sistema de pagos)
@@ -216,6 +228,14 @@ npm run dev
 
 Servidor disponible en:
 http://localhost:4000
+
+Variables de entorno (.env.example)
+
+El proyecto usa variables mínimas para configuración.  
+Crea un archivo `.env` basado en:
+
+Port=4000
+Opcionalmente puedes extenderlo si utilizas servicios externos (por ejemplo, un gateway de pagos real).
 
 ⸻
 
