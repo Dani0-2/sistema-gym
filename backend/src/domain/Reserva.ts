@@ -10,9 +10,16 @@ export interface ReservaProps {
 }
 
 export class Reserva {
-  props: ReservaProps;
+  constructor(public props: ReservaProps) {}
 
-  constructor(props: ReservaProps) {
-    this.props = props;
+  cancelar() {
+    if (this.props.estado === "cancelada") {
+      throw new Error("La reserva ya está cancelada");
+    }
+
+    if (this.props.estado === "pagada") {
+    }
+
+    this.props.estado = "cancelada";
   }
 }

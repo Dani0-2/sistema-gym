@@ -10,5 +10,8 @@ const reservasService = new ReservasService(reservasRepo);
 const reservasController = new ReservasController(reservasService);
 
 router.post("/", reservasController.crearReserva);
+router.get("/:id", reservasController.obtenerReservaPorId);
+router.get("/disponibilidad/check", reservasController.consultarDisponibilidad);
+router.post("/:id/cancelar", reservasController.cancelarReserva);
 
 export default router;

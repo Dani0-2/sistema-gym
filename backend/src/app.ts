@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/reservas", reservasRoutes);
 
-// Simple health check endpoint
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
