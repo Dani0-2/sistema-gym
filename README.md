@@ -239,6 +239,31 @@ Opcionalmente puedes extenderlo si utilizas servicios externos (por ejemplo, un 
 
 ⸻
 
+Frontend (React)
+
+El proyecto incluye un frontend mínimo en React con Vite para interactuar con el backend.
+
+Cómo ejecutar el frontend
+cd frontend
+npm install
+npm run dev
+
+Funcionalidades
+	•	Crear canchas (nombre y precio por hora), que se guardan en el backend.
+	•	Listar canchas y seleccionar una en un <select> para crear la reserva.
+	•	Crear reservas indicando:
+	•	Cancha
+	•	Usuario
+	•	Fecha
+	•	Hora de inicio y fin
+	•	Pagar y cancelar la última reserva creada desde la misma pantalla.
+
+El frontend utiliza dos patrones de diseño:
+	•	Adapter para consumo de la API (apiClient, reservasApi, canchasApi).
+	•	Strategy a través de un custom hook de validación (reservaValidationStrategies, useReservaForm).
+
+⸻
+
 Estructura del proyecto
 backend/
   src/
