@@ -92,6 +92,3 @@ Ejemplos de métodos:
 - `Reserva.marcarComoPagada()`
 - `Reserva.cancelar()`
 
----
-
-> Los patrones de frontend se documentarán en este mismo archivo en la sección “Patrones – Frontend” cuando se implemente la SPA (React).

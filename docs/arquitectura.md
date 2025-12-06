@@ -1,167 +1,184 @@
-Arquitectura del Sistema de Reservas de Canchas
+# Arquitectura del Sistema de Reservas de Canchas
 
-Introducción
+Este documento describe la arquitectura interna del Sistema de Reservas de Canchas, desarrollado en Node.js y TypeScript. El sistema utiliza una estructura modular en capas, principios SOLID y patrones de diseño propios de sistemas profesionales.
 
-Este documento describe la arquitectura interna del Sistema de Reservas de Canchas, desarrollado en Node.js y TypeScript bajo una estructura modular basada en capas, principios SOLID y patrones de diseño comunes en sistemas profesionales.
+---
 
-⸻
+## 1. Arquitectura General
 
-1. Arquitectura General
+El backend implementa una arquitectura por capas inspirada en Clean Architecture:
 
-El backend sigue una arquitectura por capas inspirada en Clean Architecture:
 Domain → Repository → Service → Controller → Routes → App (Express)
-Cada capa es independiente, con responsabilidades bien definidas y sin dependencias hacia implementaciones concretas.
 
-⸻
+Cada capa tiene responsabilidades bien definidas y no depende de implementaciones concretas, lo que facilita mantenibilidad, extensibilidad y pruebas.
 
-2. Domain Layer (Modelo de Dominio)
+---
 
-Contiene los modelos principales del sistema junto con sus reglas internas.
+## 2. Domain Layer (Modelo de Dominio)
 
-Reserva
-	•	Representa una reserva de cancha realizada por un usuario.
-	•	Métodos relevantes:
-	•	marcarComoPagada()
-	•	cancelar()
-	•	Encapsula reglas como evitar pagar dos veces o cancelar una reserva ya cancelada.
+Incluye las entidades principales del sistema y las reglas de negocio que les pertenecen.
 
-Cancha
-	•	Representa una cancha disponible en el sistema.
-	•	Métodos relevantes:
-	•	actualizarDatos()
-	•	desactivar()
-	•	Encapsula reglas como mantener consistencia en cambios de estado o precios.
+### Reserva
+Representa una reserva realizada por un usuario.
 
-La capa de dominio no depende de Express, HTTP, base de datos o detalles externos.
+Métodos principales:
+- marcarComoPagada()
+- cancelar()
 
-⸻
+Reglas encapsuladas:
+- No permitir pagos duplicados.
+- No permitir cancelar reservas ya canceladas.
+- Control estricto del estado de la reserva.
 
-3. Repository Layer
+### Cancha
+Representa una cancha disponible para reservar.
 
-Define interfaces de persistencia desacopladas de cualquier tecnología:
-	•	ICanchasRepository
-	•	IReservasRepository
+Métodos principales:
+- actualizarDatos()
+- desactivar()
 
-Incluye implementaciones en memoria:
-	•	CanchasInMemoryRepository
-	•	ReservasInMemoryRepository
+Reglas encapsuladas:
+- Mantener consistencia en los cambios de estado.
+- Controlar actualizaciones de datos como el precio.
 
-Estas implementaciones funcionan como almacenamiento temporal durante la ejecución, permitiendo reemplazar fácilmente por una base de datos real sin modificar el dominio ni los servicios.
+> La capa Domain no depende de Express, HTTP, bases de datos ni infraestructura externa.
 
-⸻
+---
 
-4. Service Layer (Lógica de Negocio)
+## 3. Repository Layer
 
-Contiene la lógica del sistema y las validaciones más importantes.
+Define **interfaces de persistencia** totalmente desacopladas de bases de datos concretas.
 
-CanchasService
-	•	Crear cancha.
-	•	Listar, actualizar y eliminar canchas.
-	•	Validar existencia de cancha antes de una reserva.
+Interfaces:
+- ICanchasRepository
+- IReservasRepository
 
-ReservasService
+Implementaciones:
+- CanchasInMemoryRepository
+- ReservasInMemoryRepository
 
-Responsable de:
-	•	Crear reservas con validaciones:
-	•	Fecha futura.
-	•	Horarios válidos (horaInicio < horaFin).
-	•	Cancha existente y activa.
-	•	No solapamiento de horarios.
-	•	Consultar disponibilidad.
-	•	Cancelar reservas.
-	•	Pagar reservas mediante un gateway externo.
-	•	Obtener reserva por ID.
+Ventajas:
+- El almacenamiento se puede reemplazar fácilmente por PostgreSQL, MongoDB u otro sin modificar servicios ni dominio.
 
-Los servicios no manejan HTTP y no dependen de Express.
+---
 
-⸻
+## 4. Service Layer (Lógica de Negocio)
 
-5. Controller Layer
+Contiene las validaciones y reglas principales del sistema.
+
+### CanchasService
+Responsabilidades:
+- Crear canchas.
+- Listar, actualizar y eliminar canchas.
+- Validar existencia de canchas antes de crear reservas.
+
+### ReservasService
+Responsabilidades:
+- Crear reservas aplicando validaciones:
+  - Fecha futura
+  - Horario válido (inicio < fin)
+  - Cancha existente
+  - Cancha activa
+  - No solapamiento
+- Consultar disponibilidad.
+- Cancelar reservas.
+- Pagar reservas usando un gateway externo.
+- Obtener reserva por ID.
+
+> Los servicios no manejan HTTP ni dependen de Express; solo usan repositorios, entidades y adaptadores.
+
+---
+
+## 5. Controller Layer
 
 Incluye:
-	•	ReservasController
-	•	CanchasController
+- ReservasController
+- CanchasController
 
-Funciones principales:
-	•	Recibir solicitudes HTTP.
-	•	Mapear datos de entrada hacia los servicios.
-	•	Manejar errores y devolver respuestas JSON.
-	•	Actuar como capa intermedia entre Routes y Services.
+Rol de los controladores:
+- Recibir solicitudes HTTP.
+- Validar datos básicos de entrada.
+- Invocar el servicio correspondiente.
+- Devolver respuestas JSON.
+- Gestionar errores operacionales.
 
-⸻
+Sirven como intermediarios entre Routes y Services.
 
-6. Routes Layer
+---
 
-Define los endpoints expuestos por el API.
+## 6. Routes Layer
 
-Rutas principales:
-	•	/canchas
-	•	/reservas
+Define los endpoints públicos del API:
 
-Cada ruta está vinculada a su controlador correspondiente.
+- /canchas
+- /reservas
 
-⸻
+Cada ruta está conectada a un método de su controlador correspondiente.
 
-7. Infrastructure Layer (Adaptadores)
+---
 
-Contiene implementaciones externas como:
+## 7. Infrastructure Layer (Adaptadores)
 
-FakePaymentGateway
-	•	Implementa la interfaz IPaymentGateway.
-	•	Representa un proveedor de pagos externo simulado.
-	•	Utiliza el patrón Adapter para permitir que la lógica de pagos permanezca desacoplada del proveedor real.
+Incluye implementaciones externas necesarias para el sistema.
 
-⸻
+### FakePaymentGateway
+- Implementa IPaymentGateway.
+- Simula un proveedor de pagos real.
+- Usa el Adapter Pattern para mantener la lógica de pagos independizada del proveedor.
 
-8. Patrones de Diseño Utilizados
+Gracias a esta abstracción, cambiar a Stripe o PayPal solo requiere modificar esta implementación.
 
-Repository Pattern
+---
 
-Permite abstraer la persistencia y desacoplar la lógica de negocio de los detalles de almacenamiento.
+## 8. Patrones de Diseño Utilizados
 
-Dependency Injection
+### Repository Pattern
+Desacopla la lógica de negocio del mecanismo de persistencia.
 
-Los servicios reciben repositorios y gateways a través del constructor.
+### Dependency Injection
+Servicios reciben repositorios y gateways mediante constructores.
 
-Adapter Pattern
+### Adapter Pattern
+Usado en el sistema de pagos para desacoplar la lógica de negocio del proveedor externo.
 
-Aplicado en el sistema de pagos para aislar al sistema del proveedor externo.
+### Domain Model
+Entidades ricas con métodos y reglas encapsuladas.
 
-Domain Model
+### Principios SOLID
+- SRP: cada clase cumple una sola responsabilidad.
+- OCP: se pueden extender funcionalidades sin modificar código existente.
+- LSP: repositorios intercambiables por usar interfaces.
+- ISP: interfaces pequeñas y específicas.
+- DIP: servicios dependen de abstracciones, no implementaciones concretas.
 
-Entidades con lógica propia que representan objetos reales del dominio.
+---
 
-Principios SOLID
-	•	SRP: cada clase tiene una única responsabilidad.
-	•	OCP: los servicios pueden extenderse sin modificarse directamente.
-	•	LSP: repositorios intercambiables a través de interfaces.
-	•	ISP: interfaces pequeñas y específicas.
-	•	DIP: los servicios dependen de abstracciones y no implementaciones concretas.
-
-⸻
-
-9. Flujo de una petición
+## 9. Flujo de una Petición
 
 Ejemplo: Crear una reserva
-	1.	POST /reservas (Routes)
-	2.	ReservasController.crearReserva()
-	3.	ReservasService.crearReserva()
-	4.	Validación de negocio
-	5.	ReservasInMemoryRepository.create()
-	6.	Respuesta al cliente en formato JSON
 
-⸻
+1. POST /reservas (Routes)
+2. ReservasController.crearReserva()
+3. ReservasService.crearReserva()
+4. Se ejecutan todas las validaciones de negocio
+5. ReservasInMemoryRepository.create()
+6. Respuesta JSON enviada al cliente
 
-10. Capacidad de expansión
+Este flujo refleja la separación clara de responsabilidades.
+
+---
+
+## 10. Capacidad de Expansión
 
 La arquitectura permite:
-	•	Reemplazar InMemory por una base de datos real sin modificar lógica.
-	•	Cambiar FakePaymentGateway por Stripe u otro servicio real.
-	•	Extender funcionalidades sin romper el código existente.
-	•	Conectar un frontend móvil o web sin cambios en los servicios.
 
-⸻
+- Reemplazar fácilmente el almacenamiento InMemory por una base de datos real.
+- Sustituir el gateway de pagos por Stripe, PayPal u otro proveedor.
+- Añadir nuevas reglas de negocio sin afectar servicios o controladores existentes.
+- Conectar aplicaciones móviles o web sin cambiar la lógica backend.
 
-11. Conclusión
+---
 
-El sistema está diseñado siguiendo buenas prácticas de ingeniería de software, priorizando modularidad, mantenibilidad, escalabilidad y claridad arquitectónica. Esta estructura permite continuar desarrollando nuevas funcionalidades sin comprometer la estabilidad del proyecto.
+## 11. Conclusión
+
+El sistema está diseñado para ser modular, mantenible y escalable, siguiendo buenas prácticas de ingeniería de software. La separación de capas y el uso de patrones garantizan que el proyecto pueda crecer sin comprometer su estabilidad ni su claridad.

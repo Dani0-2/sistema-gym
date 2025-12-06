@@ -1,132 +1,168 @@
-Trazabilidad entre Historias de Usuario y Endpoints
+# Trazabilidad entre Historias de Usuario y Endpoints
 
-Este documento relaciona cada Historia de Usuario (HU) del sistema con los componentes del backend que la implementan: endpoints, servicios, controladores y repositorios.
+Este documento relaciona cada Historia de Usuario (HU) con los componentes del backend que la implementan:  
+endpoints, controladores, servicios, repositorios y reglas de negocio.
 
-La trazabilidad permite verificar que cada requerimiento funcional está cubierto por una implementación concreta dentro del sistema.
+La trazabilidad permite verificar que cada requerimiento funcional está cubierto por una implementación concreta.
 
-⸻
+---
 
-1. Tabla de Trazabilidad HU → Endpoints
-| Historia de Usuario | Descripción | Endpoint | Componentes |
-|---------------------|-------------|----------|-------------|
-| HU-01 | Consultar disponibilidad | `GET /reservas/disponibilidad/check` | `ReservasController.consultarDisponibilidad`, `ReservasService.verificarDisponibilidad`, `ReservasInMemoryRepository.findByCanchaYFecha` |
-| HU-02 | Validar solapamiento | `GET /reservas/disponibilidad/check` | `ReservasService.verificarDisponibilidad` (comparación de rangos horarios) |
-| HU-03 | Crear reserva | `POST /reservas` | `ReservasController.crearReserva`, `ReservasService.crearReserva`, repositorios y validaciones |
-| HU-04 | Obtener reserva por ID | `GET /reservas/:id` | `ReservasController.obtenerReservaPorId`, `ReservasService.obtenerReservaPorId`, repositorio |
-| HU-05 | Pagar reserva | `POST /reservas/:id/pagar` | `ReservasController.pagarReserva`, `ReservasService.pagarReserva`, `IPaymentGateway`, `FakePaymentGateway`, `Reserva.marcarComoPagada()` |
-| HU-06 | Cancelar reserva | `POST /reservas/:id/cancelar` | `ReservasController.cancelarReserva`, `ReservasService.cancelarReserva`, `Reserva.cancelar()` |
-| HU-07 | CRUD de canchas | `POST /canchas`, `GET /canchas`, `GET /canchas/:id`, `PUT /canchas/:id`, `DELETE /canchas/:id` | `CanchasController`, `CanchasService`, repositorios |
-| HU-08 | Validar cancha existente antes de reservar | `POST /reservas` | Validación en `ReservasService.crearReserva` mediante `canchasRepo.findById` |
-| HU-09 | Validar horarios correctos | `POST /reservas` | Validación de horas en `ReservasService.crearReserva` |
-| HU-10 | Validar fecha futura | `POST /reservas` | Comparación de fecha con fecha actual |
-| HU-11 | Validar cancha activa | `POST /reservas` | Verificación `cancha.props.activa` en `ReservasService.crearReserva` |
+## 1. Tabla de Trazabilidad HU → Endpoints → Componentes
 
-2. Detalle de implementación por Historia de Usuario
+| Historia de Usuario | Descripción | Endpoint | Componentes involucrados |
+|---------------------|-------------|----------|---------------------------|
+| **HU-01** | Consultar disponibilidad | `GET /reservas/disponibilidad/check` | `ReservasController.consultarDisponibilidad`, `ReservasService.verificarDisponibilidad`, `ReservasInMemoryRepository.findByCanchaYFecha` |
+| **HU-02** | Validar solapamiento | `GET /reservas/disponibilidad/check` | `ReservasService.verificarDisponibilidad` (comparación de rangos horarios) |
+| **HU-03** | Crear reserva | `POST /reservas` | `ReservasController.crearReserva`, `ReservasService.crearReserva`, `ReservasInMemoryRepository.create`, validaciones de dominio |
+| **HU-04** | Obtener reserva por ID | `GET /reservas/:id` | `ReservasController.obtenerReservaPorId`, `ReservasService.obtenerReservaPorId`, `ReservasInMemoryRepository.findById` |
+| **HU-05** | Pagar reserva | `POST /reservas/:id/pagar` | `ReservasController.pagarReserva`, `ReservasService.pagarReserva`, `IPaymentGateway`, `FakePaymentGateway`, `Reserva.marcarComoPagada()` |
+| **HU-06** | Cancelar reserva | `POST /reservas/:id/cancelar` | `ReservasController.cancelarReserva`, `ReservasService.cancelarReserva`, `Reserva.cancelar()` |
+| **HU-07** | CRUD de canchas | `POST/GET/PUT/DELETE /canchas` | `CanchasController`, `CanchasService`, `CanchasInMemoryRepository` |
+| **HU-08** | Validar cancha existente antes de reservar | `POST /reservas` | `ReservasService.crearReserva → canchasRepo.findById` |
+| **HU-09** | Validar horarios correctos | `POST /reservas` | `ReservasService.crearReserva`, función `horaToMinutos` |
+| **HU-10** | Validar fecha futura | `POST /reservas` | Comparación contra fecha del sistema en `ReservasService.crearReserva` |
+| **HU-11** | Validar que la cancha esté activa | `POST /reservas` | `ReservasService.crearReserva`, validación `cancha.props.activa` |
 
-HU-01 & HU-02 — Consultar disponibilidad y evitar solapamientos
-	•	Endpoint:
-	•	GET /reservas/disponibilidad/check
-	•	Lógica principal:
-	•	Conversión de horas a minutos: horaToMinutos()
-	•	Evaluación de traslape: comparación de rangos horarios
-	•	Capas involucradas:
-	•	Controller → consultarDisponibilidad
-	•	Service → verificarDisponibilidad
-	•	Repository → findByCanchaYFecha
+---
 
-⸻
+## 2. Detalle de Implementación por Historia de Usuario
 
-HU-03 — Crear reserva
-	•	Endpoint:
-	•	POST /reservas
-	•	Validaciones consideradas:
-	•	Cancha existente
-	•	Cancha activa
-	•	Fecha futura
-	•	Horario válido (inicio < fin)
-	•	No traslape
-	•	Lógica principal:
-	•	ReservasService.crearReserva
-	•	Entidad Reserva
+---
 
-⸻
+### **HU-01 & HU-02 — Consultar disponibilidad y evitar solapamientos**
 
-HU-04 — Consultar reserva por ID
-	•	Endpoint:
-	•	GET /reservas/:id
-	•	Lógica principal:
-	•	ReservasInMemoryRepository.findById
-	•	ReservasService.obtenerReservaPorId
+**Endpoint:**  
+- `GET /reservas/disponibilidad/check`
 
-⸻
+**Lógica clave:**
+- Conversión de horas a minutos (`horaToMinutos`)
+- Comparación de rangos horarios para detectar solapamientos
 
-HU-05 — Pago de reserva
-	•	Endpoint:
-	•	POST /reservas/:id/pagar
-	•	Patrón aplicado:
-	•	Adapter (IPaymentGateway + FakePaymentGateway)
-	•	Reglas:
-	•	Validar que la reserva esté en estado pendiente
-	•	Evitar pagos duplicados
+**Capas involucradas:**
+- Controller → `consultarDisponibilidad`
+- Service → `verificarDisponibilidad`
+- Repository → `findByCanchaYFecha`
 
-⸻
+---
 
-HU-06 — Cancelar reserva
-	•	Endpoint:
-	•	POST /reservas/:id/cancelar
-	•	Reglas:
-	•	No se puede cancelar dos veces
-	•	No se puede pagar luego de cancelar
-	•	Implementación:
-	•	Método cancelar() dentro de la entidad Reserva
+### **HU-03 — Crear reserva**
 
-⸻
+**Endpoint:**  
+- `POST /reservas`
 
-HU-07 — CRUD de canchas
-	•	Endpoints:
-	•	POST /canchas
-	•	GET /canchas
-	•	GET /canchas/:id
-	•	PUT /canchas/:id
-	•	DELETE /canchas/:id
-	•	Lógica:
-	•	Administrar disponibilidad y atributos de canchas
-	•	Validar datos actualizados
-	•	Llamadas a:
-	•	CanchasService
-	•	CanchasController
+**Validaciones incluidas:**
+- Cancha existente
+- Cancha activa
+- Fecha futura
+- Horario válido (`inicio < fin`)
+- No traslape con otras reservas
 
-⸻
+**Implementación:**
+- `ReservasService.crearReserva`
+- Entidad `Reserva`
 
-HU-08 — Validar existencia de cancha antes de reservar
-	•	Validación:
-	•	this.canchasRepo.findById(data.canchaId)
-	•	Mensaje de error:
-	•	"La cancha no existe"
+---
 
-⸻
+### **HU-04 — Consultar reserva por ID**
 
-HU-09 y HU-10 — Validaciones de horario y fecha
-	•	Validaciones:
-	•	horaInicio < horaFin
-	•	Fecha futura: comparación con fecha actual
-	•	Lugar:
-	•	ReservasService.crearReserva
+**Endpoint:**  
+- `GET /reservas/:id`
 
-⸻
+**Implementación:**
+- `ReservasService.obtenerReservaPorId`
+- `ReservasInMemoryRepository.findById`
 
-HU-11 — Cancha activa
-	•	Validación:
-	•	if (!cancha.props.activa) throw new Error("La cancha está inactiva")
+---
 
-⸻
+### **HU-05 — Pago de reserva**
 
-3. Conclusión
+**Endpoint:**  
+- `POST /reservas/:id/pagar`
 
-Cada historia de usuario tiene una asociación directa con:
-	•	Un endpoint
-	•	Un controlador
-	•	Una función de servicio
-	•	Un método en el repositorio o entidad
+**Patrón utilizado:**
+- **Adapter Pattern** → `IPaymentGateway` + `FakePaymentGateway`
 
-Esto garantiza que el sistema cumple los requerimientos funcionales y puede trazarse cada HU a su implementación correspondiente.
+**Reglas:**
+- Solo se puede pagar una reserva pendiente
+- No se aceptan pagos duplicados
+
+---
+
+### **HU-06 — Cancelar reserva**
+
+**Endpoint:**  
+- `POST /reservas/:id/cancelar`
+
+**Reglas:**
+- No cancelar dos veces
+- No pagar una reserva ya cancelada
+
+**Implementación:**
+- `Reserva.cancelar()`
+- `ReservasService.cancelarReserva`
+
+---
+
+### **HU-07 — CRUD de canchas**
+
+**Endpoints:**
+- `POST /canchas`
+- `GET /canchas`
+- `GET /canchas/:id`
+- `PUT /canchas/:id`
+- `DELETE /canchas/:id`
+
+**Implementación:**
+- `CanchasController`
+- `CanchasService`
+- `CanchasInMemoryRepository`
+
+---
+
+### **HU-08 — Validar existencia de cancha**
+
+**Validación:**
+- `this.canchasRepo.findById(data.canchaId)`
+
+**Error generado:**
+- `"La cancha no existe"`
+
+---
+
+### **HU-09 — Validar horarios**
+
+Validaciones:
+- `horaInicio < horaFin`
+
+Lugar:
+- `ReservasService.crearReserva`
+
+---
+
+### **HU-10 — Validar fecha futura**
+
+Validación:
+- Comparación con fecha del sistema
+
+Lugar:
+- `ReservasService.crearReserva`
+
+---
+
+### **HU-11 — Validar cancha activa**
+
+Validación:
+- `if (!cancha.props.activa) throw new Error("La cancha está inactiva");`
+
+---
+
+## 3. Conclusión
+
+Cada Historia de Usuario está directamente asociada con:
+
+- Un **endpoint**
+- Un **controlador**
+- Una **función de servicio**
+- Un **repositorio** o una **entidad de dominio**
+
+Esto garantiza trazabilidad completa entre requerimientos y su implementación real, asegurando un sistema mantenible, escalable y correctamente documentado.

@@ -1,292 +1,204 @@
-Sistema de Reservas de Canchas – Backend
+# Sistema de Reservas de Canchas – Backend
 
-Descripción general
+## Descripción general
 
-Este proyecto implementa un sistema backend para la gestión de reservas de canchas deportivas. Se desarrolló utilizando Node.js y TypeScript, aplicando una arquitectura modular por capas inspirada en Clean Architecture, principios SOLID y patrones de diseño profesionales.
+Este proyecto implementa un backend para gestionar reservas de canchas deportivas.  
+Fue construido con Node.js + TypeScript, siguiendo principios de Clean Architecture, SOLID y patrones profesionales.
 
 El sistema permite:
-	•	Gestión completa de canchas (creación, consulta, actualización y eliminación).
-	•	Creación y administración de reservas.
-	•	Validación de disponibilidad y detección de solapamientos.
-	•	Validación de fecha, horarios y estado de la cancha.
-	•	Pagos simulados mediante un proveedor externo (Adapter Pattern).
-	•	Cancelación de reservas con reglas de negocio asociadas.
 
-⸻
+- Gestión completa de canchas (crear, consultar, actualizar y eliminar).
+- Creación y administración de reservas.
+- Validación de disponibilidad y detección de solapamientos.
+- Validación de fecha, horarios y estado de la cancha.
+- Pagos simulados mediante un proveedor externo (Adapter Pattern).
+- Cancelación de reservas con reglas de negocio.
 
-Tecnologías utilizadas
-	•	Node.js
-	•	TypeScript
-	•	Express
-	•	Arquitectura por capas
-	•	Repositorios InMemory
-	•	Patrones de diseño (Repository, Adapter, Domain Model)
+---
 
-⸻
+## Tecnologías utilizadas
 
-Arquitectura del sistema
+- Node.js  
+- TypeScript  
+- Express  
+- Repositorios InMemory  
+- Clean Architecture  
+- Patrones: Repository, Adapter, Domain Model  
 
-El sistema se organiza en las siguientes capas:
-Domain
-Repository
-Service
-Controller
-Routes
-Infrastructure
+---
 
-Domain Layer
+## Arquitectura del sistema
 
-Incluye las entidades Reserva y Cancha, junto con su lógica interna y reglas de negocio.
+El sistema se organiza en capas:
 
-Repository Layer
+### Domain Layer
+Entidades ricas con reglas de negocio (Reserva, Cancha).
 
-Contiene interfaces (ICanchasRepository, IReservasRepository) y sus implementaciones InMemory.
+### Repository Layer
+Interfaces + implementaciones InMemory.
 
-Service Layer
+### Service Layer
+Reglas de negocio: validaciones, disponibilidad, pagos, cancelación.
 
-Contiene la lógica de negocio: validaciones, disponibilidad, reservas, pagos, cancelación y actualizaciones.
+### Controller Layer
+Controladores Express.
 
-Controller Layer
+### Routes Layer
+Definición de endpoints REST.
 
-Recibe solicitudes HTTP, ejecuta servicios y gestiona respuestas.
+### Infrastructure Layer
+Implementaciones externas (FakePaymentGateway).
 
-Routes Layer
+Documentación completa en: docs/arquitectura.md
 
-Define los endpoints del sistema.
+---
 
-Infrastructure Layer
+## Patrones de diseño y SOLID
 
-Contiene implementaciones externas como FakePaymentGateway, aplicando el patrón Adapter.
+Archivos dedicados:
 
-La documentación detallada se encuentra en:
-/docs/arquitectura.md
+- SOLID.md  
+- PATTERNS.md  
 
-⸻
+Patrones aplicados:
 
-Patrones de Diseño y Principios SOLID
+- Repository Pattern  
+- Adapter Pattern  
+- Domain Model  
+- Dependency Injection  
+- Strategy (frontend)  
+- Adapter (frontend API)
 
-Este proyecto aplica múltiples patrones de diseño y principios de arquitectura limpia.  
-Los detalles completos se encuentran en:
+---
 
-- [`SOLID.md`](./SOLID.md): Evidencia de la aplicación de SRP, DIP, ISP y casos OCP/LSP.
-- [`PATTERNS.md`](./PATTERNS.md): Patrones aplicados en backend (Repository, Adapter, Domain Model, DI) y patrones planificados para frontend.
+## Modelos principales
 
-Estos archivos contienen rutas a las clases, explicaciones técnicas y justificación de diseño.
+### Cancha
+- id  
+- nombre  
+- precio por hora  
+- activa/inactiva  
 
-⸻
+### Reserva
+- id  
+- usuario  
+- cancha  
+- fecha  
+- horaInicio / horaFin  
+- estado (pendiente, pagada, cancelada)
 
-Patrones de diseño aplicados
-	•	Repository Pattern
-	•	Adapter Pattern (para el sistema de pagos)
-	•	Dependency Injection
-	•	Domain Model
-	•	Principios SOLID
+---
 
-Explicación completa:
-/docs/decisiones-tecnicas.md
+## Endpoints principales
 
-⸻
+### Canchas
+- POST /canchas  
+- GET /canchas  
+- GET /canchas/:id  
+- PUT /canchas/:id  
+- DELETE /canchas/:id  
 
-Modelos principales
+### Reservas
+- POST /reservas  
+- GET /reservas/disponibilidad/check  
+- GET /reservas/:id  
+- POST /reservas/:id/cancelar  
+- POST /reservas/:id/pagar  
 
-Cancha
-	•	Identificador
-	•	Nombre
-	•	Precio por hora
-	•	Estado (activa/inactiva)
-	•	Reglas para actualización y activación
+---
 
-Reserva
-	•	Identificador
-	•	Usuario
-	•	Cancha
-	•	Fecha
-	•	Hora de inicio y fin
-	•	Estado (pendiente, pagada, cancelada)
-	•	Reglas: pagar, cancelar, evitar inconsistencias
+## Trazabilidad HU → Endpoints
 
-⸻
-
-Endpoints principales
-
-Canchas
-
-Crear cancha
-
-POST /canchas
-
-Obtener todas las canchas
-
-GET /canchas
-
-Obtener cancha por ID
-
-GET /canchas/:id
-
-Actualizar cancha
-
-PUT /canchas/:id
-
-Eliminar cancha
-
-DELETE /canchas/:id
-
-⸻
-
-Reservas
-
-Crear reserva
-
-POST /reservas
-
-Validaciones aplicadas:
-	•	Fecha futura
-	•	Horarios correctos
-	•	Cancha existente y activa
-	•	No solapamiento
-
-Consultar disponibilidad
-
-GET /reservas/disponibilidad/check
-
-Obtener reserva por ID
-
-GET /reservas/:id
-
-Cancelar reserva
-
-POST /reservas/:id/cancelar
-
-Pagar reserva
-
-POST /reservas/:id/pagar
-
-Reglas:
-	•	No se puede pagar dos veces
-	•	No se puede pagar una reserva cancelada
-	•	El estado cambia a “pagada”
-
-⸻
-
-Trazabilidad HU → Endpoints (resumen)
 | HU | Funcionalidad | Endpoint |
 |----|---------------|----------|
-| HU-01 | Consultar disponibilidad | `GET /reservas/disponibilidad/check` |
-| HU-02 | Validar solapamiento | `GET /reservas/disponibilidad/check` |
-| HU-03 | Crear reserva | `POST /reservas` |
-| HU-04 | Consultar reserva por ID | `GET /reservas/:id` |
-| HU-05 | Pago de reserva | `POST /reservas/:id/pagar` |
-| HU-06 | Cancelar reserva | `POST /reservas/:id/cancelar` |
-| HU-07 | CRUD de canchas | `POST /canchas`, `GET /canchas`, `GET /canchas/:id`, `PUT /canchas/:id`, `DELETE /canchas/:id` |
-| HU-08 | Validar cancha existente | `POST /reservas` |
-| HU-09 | Validar horarios | `POST /reservas` |
-| HU-10 | Validar fecha futura | `POST /reservas` |
-| HU-11 | Validar cancha activa | `POST /reservas` |
+| HU-01 | Consultar disponibilidad | GET /reservas/disponibilidad/check |
+| HU-02 | Validar solapamiento | GET /reservas/disponibilidad/check |
+| HU-03 | Crear reserva | POST /reservas |
+| HU-04 | Consultar reserva por ID | GET /reservas/:id |
+| HU-05 | Pago de reserva | POST /reservas/:id/pagar |
+| HU-06 | Cancelar reserva | POST /reservas/:id/cancelar |
+| HU-07 | CRUD de canchas | varios |
+| HU-08 | Validar cancha existente | POST /reservas |
+| HU-09 | Validar horarios | POST /reservas |
+| HU-10 | Validar fecha futura | POST /reservas |
+| HU-11 | Validar cancha activa | POST /reservas |
 
-Documentación completa:
-/docs/trazabilidad.md
+---
 
-⸻
+## Pruebas funcionales
 
-Pruebas funcionales
+Probado con Thunder Client:
 
-El sistema fue probado con Thunder Client, verificando:
-	•	Validaciones de horarios
-	•	Validación de disponibilidad
-	•	Fecha futura
-	•	Cancha activa
-	•	Pago y bloqueo de doble pago
-	•	Cancelación y bloqueo de doble cancelación
-	•	Manejo correcto de estados
+- Validación de horarios  
+- Disponibilidad  
+- Fecha futura  
+- Pago y doble pago  
+- Cancelación  
+- Estados correctos  
 
-Todas las pruebas fueron superadas exitosamente.
+Documentación en: docs/pruebas.md
 
-Detalles completos:
-/docs/pruebas.md
+---
 
-⸻
+## Diagramas C4
 
-Diagramas C4
+Incluye:
 
-El repositorio incluye documentación visual en formato C4:
-	•	Nivel 1: Contexto
-	•	Nivel 2: Contenedores
-	•	Nivel 3: Componentes internos
+- Nivel 1 – Contexto  
+- Nivel 2 – Contenedores  
+- Nivel 3 – Componentes  
 
-Archivo:
-/docs/diagramas.md
+Archivo: docs/diagramas.md
 
-⸻
+---
 
-Ejecución del proyecto
+## Ejecución del proyecto
 
-Instalación de dependencias
+### Instalar dependencias
 npm install
 
-Ejecutar en modo desarrollo
+### Modo desarrollo
 npm run dev
 
-Servidor disponible en:
+Servidor en:  
 http://localhost:4000
 
-Variables de entorno (.env.example)
+### Variables de entorno
+Crear archivo `.env` con:
 
-El proyecto usa variables mínimas para configuración.  
-Crea un archivo `.env` basado en:
+PORT=4000
 
-Port=4000
-Opcionalmente puedes extenderlo si utilizas servicios externos (por ejemplo, un gateway de pagos real).
+---
 
-⸻
+# Frontend (React)
 
-Frontend (React)
+El proyecto incluye un frontend en React + Vite que consume el backend.
 
-El proyecto incluye un frontend mínimo en React con Vite para interactuar con el backend.
+### Ejecución del frontend:
+cd frontend  
+npm install  
+npm run dev  
 
-Cómo ejecutar el frontend
-cd frontend
-npm install
-npm run dev
+### Funcionalidades del frontend
 
-Funcionalidades
-	•	Crear canchas (nombre y precio por hora), que se guardan en el backend.
-	•	Listar canchas y seleccionar una en un <select> para crear la reserva.
-	•	Crear reservas indicando:
-	•	Cancha
-	•	Usuario
-	•	Fecha
-	•	Hora de inicio y fin
-	•	Pagar y cancelar la última reserva creada desde la misma pantalla.
+- Crear canchas (nombre + precio por hora)
+- Listar canchas y seleccionarlas desde un select
+- Crear reservas indicando:
+  - cancha  
+  - usuario  
+  - fecha  
+  - horaInicio y horaFin
+- Pagar reserva  
+- Cancelar reserva  
 
-El frontend utiliza dos patrones de diseño:
-	•	Adapter para consumo de la API (apiClient, reservasApi, canchasApi).
-	•	Strategy a través de un custom hook de validación (reservaValidationStrategies, useReservaForm).
+### Patrones aplicados en frontend
 
-⸻
+- Adapter Pattern (apiClient, reservasApi, canchasApi)
+- Strategy Pattern (useReservaForm + estrategias de validación)
 
-Estructura del proyecto
-backend/
-  src/
-    domain/
-    repositories/
-    services/
-    controllers/
-    routes/
-    infrastructure/
-    app.ts
-  docs/
-    arquitectura.md
-    trazabilidad.md
-    pruebas.md
-    decisiones-tecnicas.md
-    diagramas.md
-  README.md
-  tsconfig.json
-  package.json
+---
 
-  ⸻
+## Conclusión
 
-  Conclusión
-
-El sistema implementa de forma completa la gestión de canchas y reservas, con reglas de negocio correctamente encapsuladas, arquitectura modular y documentación exhaustiva.
-La estructura permite ampliaciones futuras como integración con bases de datos reales, proveedores de pago externos o clientes web/móviles.
+El sistema implementa completamente la gestión de canchas y reservas, con reglas de negocio encapsuladas, arquitectura modular, frontend funcional y documentación exhaustiva.  
+La estructura permite escalar e integrar bases de datos, proveedores reales o aplicaciones móviles.

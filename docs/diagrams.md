@@ -1,4 +1,13 @@
-\```mermaid
+# Diagramas C4 - Sistema de Reservas de Canchas
+
+A continuación se presentan los diagramas C4 que describen el sistema a tres niveles:
+- Nivel 1: Contexto
+- Nivel 2: Contenedores
+- Nivel 3: Componentes
+
+---
+
+```mermaid
 C4Context
     title Sistema de Reservas de Canchas - C4 Nivel 1 (Contexto)
 
@@ -10,9 +19,9 @@ C4Context
 
     Rel(usuario, sistema, "Realiza reservas, consulta disponibilidad, paga y cancela")
     Rel(sistema, proveedorPagos, "Envía solicitudes de cobro por reserva")
-\```
-
-\```mermaid
+```
+---
+```mermaid
 C4Container
     title Sistema de Reservas de Canchas - C4 Nivel 2 (Contenedores)
 
@@ -27,9 +36,9 @@ C4Container
     Rel(usuario, api, "Consume API via HTTP/JSON")
     Rel(api, repos, "Lee/escribe canchas y reservas")
     Rel(api, pagos, "Solicita cobros")
-\```
-
-\```mermaid
+```
+---
+```mermaid
 C4Component
     title Sistema de Reservas de Canchas - C4 Nivel 3 (Componentes Backend)
 
@@ -62,4 +71,4 @@ C4Component
 
     Rel(repoCanchas, entityCancha, "Almacena instancias de")
     Rel(repoReservas, entityReserva, "Almacena instancias de")
-\```
+```
