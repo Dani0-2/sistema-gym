@@ -1,14 +1,18 @@
-// frontend/src/App.tsx
 import { useEffect, useState } from "react";
 import { useReservaForm } from "./hooks/useReservaForm";
+import { crearCancha, listarCanchas } from "./services/canchasApi";
 import { pagarReserva, cancelarReserva } from "./services/reservasApi";
-import {
-  listarCanchas,
-  crearCancha,
-  type CanchaDTO,
-} from "./services/canchasApi";
+
+import type { CanchaDTO } from "./services/canchasApi";
+import "./App.css";
 
 function App() {
+  const [nombreCancha, setNombreCancha] = useState("");
+  const [precioPorHora, setPrecioPorHora] = useState<number | "">("");
+  const [canchas, setCanchas] = useState<CanchaDTO[]>([]);
+  const [isCreatingCancha, setIsCreatingCancha] = useState(false);
+  const [canchaError, setCanchaError] = useState<string | null>(null);
+
   const {
     form,
     errors,
@@ -19,192 +23,272 @@ function App() {
     handleSubmit,
   } = useReservaForm({ strategy: "strict" });
 
-  const [canchas, setCanchas] = useState<CanchaDTO[]>([]);
-  const [nuevaCanchaNombre, setNuevaCanchaNombre] = useState("");
-  const [nuevaCanchaPrecio, setNuevaCanchaPrecio] = useState("300");
 
-  // Cargar canchas existentes al inicio
   useEffect(() => {
-    listarCanchas()
-      .then(setCanchas)
-      .catch((err) => {
-        console.error("Error al listar canchas", err);
-      });
+    (async () => {
+      try {
+        const data = await listarCanchas();
+        setCanchas(data);
+      } catch (err) {
+        console.error(err);
+        setCanchaError("No se pudieron cargar las canchas.");
+      }
+    })();
   }, []);
 
-  async function handleCrearCancha() {
-    if (!nuevaCanchaNombre.trim()) {
-      alert("El nombre de la cancha es obligatorio");
-      return;
-    }
+  const handleCrearCancha = async () => {
+    setCanchaError(null);
 
-    const precio = Number(nuevaCanchaPrecio);
-    if (Number.isNaN(precio) || precio <= 0) {
-      alert("El precio debe ser un número mayor que 0");
+    if (!nombreCancha || precioPorHora === "" || precioPorHora <= 0) {
+      setCanchaError("Ingresa un nombre y un precio por hora válido.");
       return;
     }
 
     try {
-      const cancha = await crearCancha({
-        nombre: nuevaCanchaNombre,
-        precioPorHora: precio,
+      setIsCreatingCancha(true);
+      const nueva = await crearCancha({
+        nombre: nombreCancha,
+        precioPorHora: Number(precioPorHora),
       });
-
-      // agregar a la lista
-      setCanchas((prev) => [...prev, cancha]);
-
-      // seleccionar automáticamente en el formulario de reserva
-      handleChange("canchaId", cancha.props.id);
-
-      setNuevaCanchaNombre("");
-      // dejamos el precio igual para crear varias canchas similares si se quiere
+      setCanchas((prev) => [...prev, nueva]);
+      setNombreCancha("");
+      setPrecioPorHora("");
     } catch (err) {
-      alert((err as Error).message || "Error al crear cancha");
+      console.error(err);
+      setCanchaError("No se pudo crear la cancha.");
+    } finally {
+      setIsCreatingCancha(false);
     }
-  }
+  };
+
+  const handlePagarReserva = async () => {
+    if (!lastReserva) return;
+    try {
+      const actualizada = await pagarReserva(lastReserva.id);
+      setLastReserva(actualizada);
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  };
+
+  const handleCancelarReserva = async () => {
+    if (!lastReserva) return;
+    try {
+      const actualizada = await cancelarReserva(lastReserva.id);
+      setLastReserva(actualizada);
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  };
 
   return (
-    <div style={{ maxWidth: 600, margin: "0 auto", padding: 16 }}>
-      <h1>Sistema de Reservas de Canchas</h1>
+    <div className="app-root">
+      <header className="app-header">
+        <h1>Sistema de Reservas de Canchas</h1>
+        <p className="app-subtitle">
+          Administra canchas, crea reservas y simula pagos desde una sola
+          pantalla.
+        </p>
+      </header>
 
-      {/* ----- Crear cancha ----- */}
-      <section style={{ marginTop: 24, marginBottom: 24 }}>
-        <h2>Crear Cancha</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <label>
-            Nombre
-            <input
-              value={nuevaCanchaNombre}
-              onChange={(e) => setNuevaCanchaNombre(e.target.value)}
-            />
-          </label>
+      <main className="app-main">
+        {}
+        <section className="app-column">
+          {}
+          <div className="card">
+            <h2>Crear Cancha</h2>
 
-          <label>
-            Precio por hora
-            <input
-              type="number"
-              value={nuevaCanchaPrecio}
-              onChange={(e) => setNuevaCanchaPrecio(e.target.value)}
-            />
-          </label>
+            <div className="form-grid">
+              <label className="form-field">
+                <span>Nombre</span>
+                <input
+                  className="input"
+                  value={nombreCancha}
+                  onChange={(e) => setNombreCancha(e.target.value)}
+                  placeholder="Ej. Cancha Sintética"
+                />
+              </label>
 
-          <button onClick={handleCrearCancha}>Crear cancha</button>
-        </div>
+              <label className="form-field">
+                <span>Precio por hora</span>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  value={precioPorHora}
+                  onChange={(e) =>
+                    setPrecioPorHora(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                  placeholder="Ej. 300"
+                />
+              </label>
+            </div>
 
-        {canchas.length > 0 && (
-          <div style={{ marginTop: 12, fontSize: 14 }}>
-            <strong>Canchas creadas:</strong>{" "}
-            {canchas.map((c) => c.props.nombre).join(", ")}
-          </div>
-        )}
-      </section>
+            {canchaError && (
+              <div className="alert alert-error">{canchaError}</div>
+            )}
 
-      {/* ----- Crear reserva ----- */}
-      <section>
-        <h2>Crear Reserva</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <label>
-            Cancha
-            <select
-              value={form.canchaId}
-              onChange={(e) => handleChange("canchaId", e.target.value)}
+            <button
+              className="btn btn-primary btn-full"
+              onClick={handleCrearCancha}
+              disabled={isCreatingCancha}
             >
-              <option value="">Selecciona una cancha</option>
-              {canchas.map((c) => (
-                <option key={c.props.id} value={c.props.id}>
-                  {c.props.nombre} - L.{c.props.precioPorHora}/h
-                </option>
-              ))}
-            </select>
-          </label>
+              {isCreatingCancha ? "Creando cancha..." : "Crear cancha"}
+            </button>
 
-          <label>
-            Usuario ID
-            <input
-              value={form.usuarioId}
-              onChange={(e) => handleChange("usuarioId", e.target.value)}
-            />
-          </label>
+            {canchas.length > 0 && (
+              <div className="chip-list">
+                <span className="chip-label">Canchas creadas:</span>
+                {canchas.map((c) => (
+                  <span key={c.id} className="chip">
+                    {c.nombre} · L.{c.precioPorHora}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
 
-          <label>
-            Fecha (YYYY-MM-DD)
-            <input
-              value={form.fecha}
-              onChange={(e) => handleChange("fecha", e.target.value)}
-            />
-          </label>
+          {}
+          <div className="card card-secondary">
+            <h3>Cómo usar el sistema</h3>
+            <ol className="steps">
+              <li>Crea una o varias canchas con su precio por hora.</li>
+              <li>
+                En el formulario de reserva, selecciona una cancha de la lista.
+              </li>
+              <li>Indica usuario, fecha, hora de inicio y fin.</li>
+              <li>Guarda la reserva y luego puedes pagarla o cancelarla.</li>
+            </ol>
+          </div>
+        </section>
 
-          <label>
-            Hora inicio (HH:MM)
-            <input
-              value={form.horaInicio}
-              onChange={(e) => handleChange("horaInicio", e.target.value)}
-            />
-          </label>
+        {}
+        <section className="app-column">
+          {}
+          <div className="card">
+            <h2>Crear Reserva</h2>
 
-          <label>
-            Hora fin (HH:MM)
-            <input
-              value={form.horaFin}
-              onChange={(e) => handleChange("horaFin", e.target.value)}
-            />
-          </label>
+            <div className="form-grid">
+              <label className="form-field">
+                <span>Cancha</span>
+                <select
+                  className="input"
+                  value={form.canchaId}
+                  onChange={(e) => handleChange("canchaId", e.target.value)}
+                >
+                  <option value="">Selecciona una cancha</option>
+                  {canchas.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre} · L.{c.precioPorHora}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Creando..." : "Crear reserva"}
-          </button>
-        </div>
-      </section>
+              <label className="form-field">
+                <span>Usuario ID</span>
+                <input
+                  className="input"
+                  value={form.usuarioId}
+                  onChange={(e) => handleChange("usuarioId", e.target.value)}
+                  placeholder="Ej. USER-1"
+                />
+              </label>
 
-      {/* Errores de validación */}
-      {errors.length > 0 && (
-        <div style={{ marginTop: 16, color: "red" }}>
-          <h3>Errores:</h3>
-          <ul>
-            {errors.map((err, idx) => (
-              <li key={idx}>{err}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+              <label className="form-field">
+                <span>Fecha (YYYY-MM-DD)</span>
+                <input
+                  className="input"
+                  value={form.fecha}
+                  onChange={(e) => handleChange("fecha", e.target.value)}
+                  placeholder="2025-12-10"
+                />
+              </label>
 
-      {/* Acciones sobre la última reserva */}
-      {lastReserva && (
-        <div style={{ marginTop: 24, border: "1px solid #ccc", padding: 8 }}>
-          <h3>Acciones de la reserva</h3>
+              <label className="form-field">
+                <span>Hora inicio (HH:MM)</span>
+                <input
+                  className="input"
+                  value={form.horaInicio}
+                  onChange={(e) =>
+                    handleChange("horaInicio", e.target.value)
+                  }
+                  placeholder="08:00"
+                />
+              </label>
 
-          <button
-            onClick={async () => {
-              try {
-                const res = await pagarReserva(lastReserva.props.id);
-                setLastReserva(res);
-              } catch (err) {
-                alert((err as Error).message);
-              }
-            }}
-            style={{ marginRight: 8 }}
-          >
-            Pagar reserva
-          </button>
+              <label className="form-field">
+                <span>Hora fin (HH:MM)</span>
+                <input
+                  className="input"
+                  value={form.horaFin}
+                  onChange={(e) => handleChange("horaFin", e.target.value)}
+                  placeholder="09:00"
+                />
+              </label>
+            </div>
 
-          <button
-            onClick={async () => {
-              try {
-                const res = await cancelarReserva(lastReserva.props.id);
-                setLastReserva(res);
-              } catch (err) {
-                alert((err as Error).message);
-              }
-            }}
-          >
-            Cancelar reserva
-          </button>
+            {errors.length > 0 && (
+              <div className="alert alert-error">
+                <strong>Revisa los siguientes errores:</strong>
+                <ul>
+                  {errors.map((err, idx) => (
+                    <li key={idx}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          <pre style={{ marginTop: 16 }}>
-            {JSON.stringify(lastReserva, null, 2)}
-          </pre>
-        </div>
-      )}
+            <button
+              className="btn btn-primary btn-full"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creando reserva..." : "Crear reserva"}
+            </button>
+          </div>
+
+          {}
+          {lastReserva && (
+            <div className="card">
+              <div className="card-header-row">
+                <h2>Acciones de la reserva</h2>
+                <span className={`status-badge status-${lastReserva.estado}`}>
+                  {lastReserva.estado.toUpperCase()}
+                </span>
+              </div>
+
+              <div className="button-row">
+                <button
+                  className="btn btn-outline"
+                  onClick={handlePagarReserva}
+                  disabled={lastReserva.estado !== "pendiente"}
+                >
+                  Pagar reserva
+                </button>
+
+                <button
+                  className="btn btn-outline btn-danger"
+                  onClick={handleCancelarReserva}
+                  disabled={lastReserva.estado !== "pendiente"}
+                >
+                  Cancelar reserva
+                </button>
+              </div>
+
+              <pre className="json-viewer">
+                {JSON.stringify(lastReserva, null, 2)}
+              </pre>
+            </div>
+          )}
+        </section>
+      </main>
+
+      <footer className="app-footer">
+        <span>Proyecto Final · Sistema de Reservas de Canchas</span>
+      </footer>
     </div>
   );
 }

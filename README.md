@@ -1,204 +1,236 @@
-# Sistema de Reservas de Canchas – Backend
+# Sistema de Reservas de Canchas – Backend + Frontend
 
-## Descripción general
+Este proyecto implementa un sistema completo para la gestión de reservas de canchas deportivas, compuesto por:
 
-Este proyecto implementa un backend para gestionar reservas de canchas deportivas.  
-Fue construido con Node.js + TypeScript, siguiendo principios de Clean Architecture, SOLID y patrones profesionales.
+- Backend (Node.js + TypeScript)  
+- Frontend (React + Vite)  
+- Entorno Docker con backend + frontend ejecutándose automáticamente  
 
-El sistema permite:
+El sistema está construido con principios de Clean Architecture, SOLID y patrones de diseño tanto en backend como en frontend.
 
-- Gestión completa de canchas (crear, consultar, actualizar y eliminar).
-- Creación y administración de reservas.
-- Validación de disponibilidad y detección de solapamientos.
-- Validación de fecha, horarios y estado de la cancha.
-- Pagos simulados mediante un proveedor externo (Adapter Pattern).
-- Cancelación de reservas con reglas de negocio.
+=====================================================================
+# 🚀 Ejecución con Docker (Backend + Frontend)
+=====================================================================
 
----
+El proyecto incluye contenedores Docker para levantar todo el sistema sin necesidad de instalar Node.js localmente.
 
-## Tecnologías utilizadas
+## ▶️ Levantar todo el sistema
 
-- Node.js  
-- TypeScript  
-- Express  
-- Repositorios InMemory  
-- Clean Architecture  
-- Patrones: Repository, Adapter, Domain Model  
+docker compose up --build
 
----
+Servicios levantados:
 
-## Arquitectura del sistema
+| Servicio    | URL                    |
+|-------------|------------------------|
+| Frontend    | http://localhost:5173 |
+| Backend     | http://localhost:4000 |
 
-El sistema se organiza en capas:
+## ⏹️ Detener servicios
+
+docker compose down
+
+## 🔄 Reconstruir imágenes
+
+docker compose build --no-cache
+
+=====================================================================
+# ▶️ Ejecución sin Docker (Opcional)
+=====================================================================
+
+## Backend
+
+cd backend
+npm install
+npm run dev
+
+Backend disponible en:
+http://localhost:4000
+
+## Frontend
+
+cd frontend
+npm install
+npm run dev
+
+Frontend disponible en:
+http://localhost:5173
+
+=====================================================================
+# 🧱 Arquitectura del Sistema
+=====================================================================
+
+El backend está organizado en capas siguiendo Clean Architecture:
+
+Domain → Repository → Service → Controller → Routes → App
 
 ### Domain Layer
-Entidades ricas con reglas de negocio (Reserva, Cancha).
+Modelos ricos (Reserva, Cancha) con reglas de negocio internas.
 
 ### Repository Layer
-Interfaces + implementaciones InMemory.
+Interfaces + repositorios InMemory totalmente intercambiables con una base de datos real.
 
 ### Service Layer
-Reglas de negocio: validaciones, disponibilidad, pagos, cancelación.
+Lógica del sistema:
+- Validación de fechas y horarios  
+- Prevención de solapamiento  
+- Pago de reservas  
+- Cancelación  
+- Disponibilidad  
 
 ### Controller Layer
-Controladores Express.
+Manejan las peticiones HTTP y llaman a los servicios.
 
 ### Routes Layer
-Definición de endpoints REST.
+Define los endpoints REST.
 
 ### Infrastructure Layer
-Implementaciones externas (FakePaymentGateway).
+Implementación del Adapter Pattern:
+- FakePaymentGateway
 
-Documentación completa en: docs/arquitectura.md
+Documentación completa:
+docs/arquitectura.md
 
----
+=====================================================================
+# 📐 Patrones de Diseño (Backend + Frontend)
+=====================================================================
 
-## Patrones de diseño y SOLID
-
-Archivos dedicados:
-
+Documentados en:
 - SOLID.md  
 - PATTERNS.md  
 
-Patrones aplicados:
-
+### Patrones aplicados en backend:
 - Repository Pattern  
-- Adapter Pattern  
+- Adapter Pattern (pagos)  
 - Domain Model  
 - Dependency Injection  
-- Strategy (frontend)  
-- Adapter (frontend API)
 
----
+### Patrones aplicados en frontend:
+- Adapter Pattern (apiClient + módulos de API)  
+- Strategy Pattern (validación de reservas con useReservaForm)
 
-## Modelos principales
+=====================================================================
+# 📌 Modelos Principales
+=====================================================================
 
 ### Cancha
 - id  
 - nombre  
-- precio por hora  
-- activa/inactiva  
+- precioPorHora  
+- activa  
 
 ### Reserva
 - id  
-- usuario  
-- cancha  
+- usuarioId  
+- canchaId  
 - fecha  
 - horaInicio / horaFin  
-- estado (pendiente, pagada, cancelada)
+- estado (pendiente, pagada, cancelada)  
+- creadoEn  
 
----
-
-## Endpoints principales
+=====================================================================
+# 🌐 Endpoints Principales
+=====================================================================
 
 ### Canchas
-- POST /canchas  
-- GET /canchas  
-- GET /canchas/:id  
-- PUT /canchas/:id  
-- DELETE /canchas/:id  
+POST /canchas  
+GET /canchas  
+GET /canchas/:id  
+PUT /canchas/:id  
+DELETE /canchas/:id  
 
 ### Reservas
-- POST /reservas  
-- GET /reservas/disponibilidad/check  
-- GET /reservas/:id  
-- POST /reservas/:id/cancelar  
-- POST /reservas/:id/pagar  
+POST /reservas  
+GET /reservas/disponibilidad/check  
+GET /reservas/:id  
+POST /reservas/:id/cancelar  
+POST /reservas/:id/pagar  
 
----
-
-## Trazabilidad HU → Endpoints
+=====================================================================
+# 🔎 Trazabilidad HU → Endpoints
+=====================================================================
 
 | HU | Funcionalidad | Endpoint |
 |----|---------------|----------|
 | HU-01 | Consultar disponibilidad | GET /reservas/disponibilidad/check |
 | HU-02 | Validar solapamiento | GET /reservas/disponibilidad/check |
 | HU-03 | Crear reserva | POST /reservas |
-| HU-04 | Consultar reserva por ID | GET /reservas/:id |
-| HU-05 | Pago de reserva | POST /reservas/:id/pagar |
-| HU-06 | Cancelar reserva | POST /reservas/:id/cancelar |
-| HU-07 | CRUD de canchas | varios |
-| HU-08 | Validar cancha existente | POST /reservas |
+| HU-04 | Consultar reserva | GET /reservas/:id |
+| HU-05 | Pago | POST /reservas/:id/pagar |
+| HU-06 | Cancelación | POST /reservas/:id/cancelar |
+| HU-07 | CRUD Canchas | /canchas |
+| HU-08 | Validar cancha | POST /reservas |
 | HU-09 | Validar horarios | POST /reservas |
-| HU-10 | Validar fecha futura | POST /reservas |
+| HU-10 | Validar fecha | POST /reservas |
 | HU-11 | Validar cancha activa | POST /reservas |
 
----
+=====================================================================
+# 🧪 Pruebas Funcionales
+=====================================================================
 
-## Pruebas funcionales
-
-Probado con Thunder Client:
+Validado con Thunder Client:
 
 - Validación de horarios  
-- Disponibilidad  
 - Fecha futura  
-- Pago y doble pago  
-- Cancelación  
+- Solapamiento  
+- Doble pago evitado  
+- Doble cancelación evitada  
 - Estados correctos  
+- CRUD de canchas  
 
-Documentación en: docs/pruebas.md
+Documentación completa:  
+docs/pruebas.md
 
----
-
-## Diagramas C4
+=====================================================================
+# 📊 Diagramas C4
+=====================================================================
 
 Incluye:
 
-- Nivel 1 – Contexto  
-- Nivel 2 – Contenedores  
-- Nivel 3 – Componentes  
+- Nivel 1 (Contexto)  
+- Nivel 2 (Contenedores)  
+- Nivel 3 (Componentes)
 
-Archivo: docs/diagramas.md
+Archivo:
+docs/diagramas.md
 
----
+=====================================================================
+# 🎨 Frontend (React + Vite)
+=====================================================================
 
-## Ejecución del proyecto
+El frontend permite:
 
-### Instalar dependencias
-npm install
+- Crear canchas  
+- Listarlas y seleccionarlas desde un <select>  
+- Crear reservas  
+- Ver estado de la última reserva  
+- Pagar y cancelar reservas  
+- Validación con Strategy Pattern  
+- Consumo de API por Adapter Pattern  
 
-### Modo desarrollo
-npm run dev
-
-Servidor en:  
-http://localhost:4000
-
-### Variables de entorno
-Crear archivo `.env` con:
-
-PORT=4000
-
----
-
-# Frontend (React)
-
-El proyecto incluye un frontend en React + Vite que consume el backend.
-
-### Ejecución del frontend:
+Ejecución:
 cd frontend  
 npm install  
-npm run dev  
+npm run dev
 
-### Funcionalidades del frontend
+=====================================================================
+# 📦 Conclusión
+=====================================================================
 
-- Crear canchas (nombre + precio por hora)
-- Listar canchas y seleccionarlas desde un select
-- Crear reservas indicando:
-  - cancha  
-  - usuario  
-  - fecha  
-  - horaInicio y horaFin
-- Pagar reserva  
-- Cancelar reserva  
+El sistema implementa:
 
-### Patrones aplicados en frontend
+✔ Reserva y cancelación con reglas de negocio robustas  
+✔ Arquitectura modular y escalable  
+✔ Frontend funcional con validación extensible  
+✔ Docker para despliegue inmediato  
+✔ Documentación profesional (C4, pruebas, patrones, arquitectura)
 
-- Adapter Pattern (apiClient, reservasApi, canchasApi)
-- Strategy Pattern (useReservaForm + estrategias de validación)
+La estructura permite extender fácilmente el proyecto hacia:
 
----
+- Bases de datos reales  
+- Pasarelas de pago auténticas  
+- Aplicaciones móviles o web avanzadas  
+- Microservicios  
 
-## Conclusión
-
-El sistema implementa completamente la gestión de canchas y reservas, con reglas de negocio encapsuladas, arquitectura modular, frontend funcional y documentación exhaustiva.  
-La estructura permite escalar e integrar bases de datos, proveedores reales o aplicaciones móviles.
+=====================================================================
+# Proyecto Final · Sistema de Reservas de Canchas
+=====================================================================
